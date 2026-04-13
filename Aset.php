@@ -1,35 +1,18 @@
-<?php
-include 'database.php';
-
-// Proses hapus aset
-if (isset($_POST['hapus_aset'])) {
-    $id = $_POST['hapus_aset'];
-    mysqli_query($conn, "DELETE FROM aset WHERE id_aset = '$id'");
-    echo "<script>alert('Aset berhasil dihapus!'); window.location='Aset.php';</script>";
-    exit;
-}
-?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Data Aset</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Aset - API Mode</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .nav-link.active {
-            font-weight: bold;
-            color: #0d6efd !important;
-        }
-        .aside-box {
-            background-color: #eaf4ff;
-            border-radius: 10px;
-            padding: 20px;
-        }
+        .nav-link.active { font-weight: bold; color: #0d6efd !important; }
+        .aside-box { background-color: #eaf4ff; border-radius: 10px; padding: 20px; }
+        footer { margin-top: 50px; }
     </style>
 </head>
 <body class="bg-light">
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold" href="#">Manajemen</a>
@@ -44,18 +27,18 @@ if (isset($_POST['hapus_aset'])) {
     </div>
 </nav>
 
-<!-- HEADER -->
 <div class="container my-5">
+    <div id="alert-container"></div>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Data Aset</h2>
         <a href="TambahAset.php" class="btn btn-primary">+ Tambah Aset</a>
     </div>
 
     <div class="row">
-        <!-- TABEL -->
         <div class="col-lg-8">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped">
+                <table class="table table-bordered table-striped bg-white shadow-sm">
                     <thead class="table-dark">
                         <tr>
                             <th>No</th>
@@ -65,38 +48,12 @@ if (isset($_POST['hapus_aset'])) {
                             <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    <?php
-                    $query = "SELECT * FROM aset";
-                    $result = mysqli_query($conn, $query);
-                    $no = 1;
-
-                    if (mysqli_num_rows($result) > 0) {
-                        while ($row = mysqli_fetch_assoc($result)) {
-                            echo "<tr>
-                                    <td>" . $no++ . "</td>
-                                    <td>" . htmlspecialchars($row['nama_aset']) . "</td>
-                                    <td>Rp " . number_format($row['saldo'], 0, ',', '.') . "</td>
-                                    <td>" . htmlspecialchars($row['keterangan']) . "</td>
-                                    <td>
-                                        <a href='EditAset.php?id_aset=" . $row['id_aset'] . "' class='btn btn-warning btn-sm'>Edit</a>
-                                        <form method='POST' class='d-inline' onsubmit=\"return confirm('Yakin ingin menghapus aset ini?')\">
-                                            <input type='hidden' name='hapus_aset' value='" . $row['id_aset'] . "'>
-                                            <button type='submit' class='btn btn-danger btn-sm'>Hapus</button>
-                                        </form>
-                                    </td>
-                                  </tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='5' class='text-center'>Belum ada data aset.</td></tr>";
-                    }
-                    ?>
-                    </tbody>
+                    <tbody id="tabel-aset">
+                        </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- SIDEBAR -->
         <div class="col-lg-4">
             <div class="aside-box shadow-sm">
                 <h5 class="fw-bold mb-2">💡 Penting</h5>
@@ -106,10 +63,83 @@ if (isset($_POST['hapus_aset'])) {
     </div>
 </div>
 
-<!-- FOOTER -->
 <footer class="bg-white text-center py-3 shadow-sm">
     <p class="mb-0 text-muted">&copy; Created by Kelompok 4</p>
 </footer>
+
+<script>
+// 1. Fungsi untuk Load Data dari API
+async function fetchAset() {
+    const tbody = document.getElementById('tabel-aset');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Memuat data...</td></tr>';
+
+    try {
+        const response = await fetch('api_aset.php');
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            tbody.innerHTML = '';
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada data aset.</td></tr>';
+                return;
+            }
+
+            result.data.forEach((row, index) => {
+                const formattedSaldo = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(row.saldo);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${row.nama_aset}</td>
+                        <td>${formattedSaldo}</td>
+                        <td>${row.keterangan || '-'}</td>
+                        <td>
+                            <a href="EditAset.php?id_aset=${row.id_aset}" class="btn btn-warning btn-sm">Edit</a>
+                            <button onclick="hapusAset(${row.id_aset})" class="btn btn-danger btn-sm">Hapus</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Gagal mengambil data dari server.</td></tr>';
+    }
+}
+
+// 2. Fungsi untuk Hapus Aset via API
+async function hapusAset(id) {
+    if (!confirm('Yakin ingin menghapus aset ini?')) return;
+
+    const formData = new FormData();
+    formData.append('id_aset', id);
+    formData.append('action', 'hapus');
+
+    try {
+        const response = await fetch('api_aset.php', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert(result.message);
+            fetchAset(); // Refresh tabel setelah hapus
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Gagal menghubungi server.");
+    }
+}
+
+// Jalankan fungsi saat halaman dimuat
+document.addEventListener('DOMContentLoaded', fetchAset);
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
