@@ -1,62 +1,76 @@
 <?php
-include 'database.php';
-
-if (!isset($_GET['id_kategori']) || !isset($_GET['jenis'])) {
-    header("Location: Kategori.php");
+session_start();
+if (!isset($_SESSION['id_pengguna'])) {
+    header("Location: login.php");
     exit;
 }
 
-$id_kategori = intval($_GET['id_kategori']);
-$jenis = $_GET['jenis'];
-
-// Ambil data berdasarkan jenis
-if ($jenis == 'Pendapatan') {
-    $result = mysqli_query($conn, "SELECT * FROM kategori_pendapatan WHERE id_kategori = $id_kategori");
-} elseif ($jenis == 'Pengeluaran') {
-    $result = mysqli_query($conn, "SELECT * FROM kategori_pengeluaran WHERE id_kategori = $id_kategori");
-} else {
-    header("Location: Kategori.php");
-    exit;
-}
-
-$data = mysqli_fetch_assoc($result);
-if (!$data) {
-    echo "Data tidak ditemukan!";
-    exit;
-}
-
-// Proses update
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama = $_POST['nama_kategori'];
-
-    if ($jenis == 'Pendapatan') {
-        mysqli_query($conn, "UPDATE kategori_pendapatan SET nama_kategori = '$nama' WHERE id_kategori = $id_kategori");
-    } elseif ($jenis == 'Pengeluaran') {
-        mysqli_query($conn, "UPDATE kategori_pengeluaran SET nama_kategori = '$nama' WHERE id_kategori = $id_kategori");
-    }
-
-    header("Location: Kategori.php");
-    exit;
-}
+// Tangkap data dari URL (dikirim dari tombol edit di Kategori.php)
+$id = $_GET['id'] ?? '';
+$nama = $_GET['nama'] ?? '';
+$jenis = $_GET['jenis'] ?? '';
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>Edit Kategori</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-<div class="container mt-5">
-    <h2 class="mb-4 text-center">Edit Kategori - <?= htmlspecialchars($jenis) ?></h2>
-    <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width: 500px;">
-        <div class="mb-3">
-            <label for="nama_kategori" class="form-label">Nama Kategori</label>
-            <input type="text" name="nama_kategori" id="nama_kategori" class="form-control" value="<?= htmlspecialchars($data['nama_kategori']) ?>" required>
+
+    <div class="container py-5">
+        <div class="card shadow-sm mx-auto p-4" style="max-width: 500px; border-radius: 15px;">
+            <h4 class="text-center mb-4">Edit Kategori</h4>
+            
+            <form id="formEditKategori">
+                <input type="hidden" id="edit_id" value="<?= htmlspecialchars($id) ?>">
+                <input type="hidden" id="old_jenis" value="<?= htmlspecialchars($jenis) ?>">
+
+                <div class="mb-3">
+                    <label class="form-label">Nama Kategori</label>
+                    <input type="text" id="edit_nama" class="form-control" value="<?= htmlspecialchars($nama) ?>" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Jenis (Tetap)</label>
+                    <input type="text" class="form-control bg-light" value="<?= htmlspecialchars($jenis) ?>" readonly>
+                    <small class="text-muted">Jenis kategori tidak dapat diubah.</small>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="Kategori.php" class="btn btn-outline-secondary">Batal</a>
+                    <button type="submit" class="btn btn-warning">Perbarui Kategori</button>
+                </div>
+            </form>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button>
-        <a href="Kategori.php" class="btn btn-secondary mt-2 w-100">Batal</a>
-    </form>
-</div>
+    </div>
+
+    <script>
+        document.getElementById('formEditKategori').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fd = new FormData();
+            fd.append('action', 'update');
+            fd.append('id_kategori', document.getElementById('edit_id').value);
+            fd.append('nama_kategori', document.getElementById('edit_nama').value);
+            fd.append('jenis', document.getElementById('old_jenis').value);
+
+            try {
+                const res = await fetch('api_kategori.php', { method: 'POST', body: fd });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    alert(result.message);
+                    window.location.href = 'Kategori.php';
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                alert("Terjadi kesalahan sistem.");
+            }
+        });
+    </script>
 </body>
 </html>

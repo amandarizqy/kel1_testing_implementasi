@@ -104,6 +104,7 @@ if (!isset($_SESSION['id_pengguna'])) {
                             <td><span class="badge bg-${badge}">${row.jenis}</span></td>
                             <td>
                                 <button onclick="hapusKategori(${row.id}, '${row.jenis}')" class="btn btn-sm btn-danger">Hapus</button>
+                                <button onclick="editKategori(${row.id}, '${row.nama}', '${row.jenis}')" class="btn btn-sm btn-warning">Edit</button>
                             </td>
                         </tr>`;
                 });
@@ -137,6 +138,12 @@ if (!isset($_SESSION['id_pengguna'])) {
 
             await fetch('api_kategori.php', { method: 'POST', body: fd });
             loadKategori();
+        }
+
+        // Ganti fungsi editKategori yang lama dengan ini
+        function editKategori(id, nama, jenis) {
+            // Berpindah ke halaman edit dengan membawa data lewat URL (Query String)
+            window.location.href = `EditKategori.php?id=${id}&nama=${encodeURIComponent(nama)}&jenis=${jenis}`;
         }
 
         document.addEventListener('DOMContentLoaded', loadKategori);

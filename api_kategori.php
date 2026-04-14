@@ -3,7 +3,6 @@ session_start();
 header("Content-Type: application/json");
 include 'database.php';
 
-// Proteksi Session
 if (!isset($_SESSION['id_pengguna'])) {
     echo json_encode(["status" => "error", "message" => "Unauthorized"]);
     exit;
@@ -15,27 +14,23 @@ $method = $_SERVER['REQUEST_METHOD'];
 // --- GET: AMBIL SEMUA KATEGORI ---
 if ($method === 'GET') {
     $data = [];
-    
-    // Ambil Kategori Pendapatan
     $q1 = mysqli_query($conn, "SELECT id_kategori, nama_kategori FROM kategori_pendapatan WHERE id_pengguna = $id_user");
     while ($row = mysqli_fetch_assoc($q1)) {
         $data[] = ['id' => $row['id_kategori'], 'nama' => $row['nama_kategori'], 'jenis' => 'Pendapatan'];
     }
-
-    // Ambil Kategori Pengeluaran
     $q2 = mysqli_query($conn, "SELECT id_kategori, nama_kategori FROM kategori_pengeluaran WHERE id_pengguna = $id_user");
     while ($row = mysqli_fetch_assoc($q2)) {
         $data[] = ['id' => $row['id_kategori'], 'nama' => $row['nama_kategori'], 'jenis' => 'Pengeluaran'];
     }
-
     echo json_encode(["status" => "success", "data" => $data]);
+    exit; // Pastikan exit setelah mengirim respon GET
 }
 
-// --- POST: TAMBAH ATAU HAPUS ---
+// --- POST: SEMUA LOGIKA (TAMBAH, HAPUS, UPDATE) ---
 if ($method === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // LOGIKA TAMBAH
+    // 1. LOGIKA TAMBAH
     if ($action === 'tambah') {
         $nama = $_POST['nama_kategori'];
         $jenis = $_POST['jenis'];
@@ -47,9 +42,10 @@ if ($method === 'POST') {
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(["status" => "success", "message" => "Kategori berhasil ditambah"]);
         }
+        exit;
     }
 
-    // LOGIKA HAPUS
+    // 2. LOGIKA HAPUS
     if ($action === 'hapus') {
         $id = intval($_POST['id_kategori']);
         $jenis = $_POST['jenis'];
@@ -61,6 +57,25 @@ if ($method === 'POST') {
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(["status" => "success", "message" => "Kategori berhasil dihapus"]);
         }
+        exit;
+    }
+
+    // 3. LOGIKA UPDATE (Sekarang sudah di dalam IF POST)
+    if ($action === 'update') {
+        $id = intval($_POST['id_kategori']);
+        $nama = $_POST['nama_kategori'];
+        $jenis = $_POST['jenis'];
+        $tabel = ($jenis === 'Pendapatan') ? 'kategori_pendapatan' : 'kategori_pengeluaran';
+
+        $stmt = mysqli_prepare($conn, "UPDATE $tabel SET nama_kategori = ? WHERE id_kategori = ? AND id_pengguna = ?");
+        mysqli_stmt_bind_param($stmt, "sii", $nama, $id, $id_user);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(["status" => "success", "message" => "Kategori berhasil diperbarui"]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Gagal memperbarui kategori"]);
+        }
+        exit;
     }
 }
 ?>

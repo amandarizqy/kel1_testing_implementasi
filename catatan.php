@@ -93,6 +93,7 @@ if (!isset($_SESSION['id_pengguna'])) {
             <thead class="table-dark">
                 <tr>
                     <th>Tanggal</th>
+                    <th>Aset</th>
                     <th>Keterangan</th>
                     <th>Kategori</th>
                     <th>Jumlah</th>
@@ -110,6 +111,7 @@ if (!isset($_SESSION['id_pengguna'])) {
             <thead class="table-dark">
                 <tr>
                     <th>Tanggal</th>
+                    <th>Aset</th>
                     <th>Keterangan</th>
                     <th>Kategori</th>
                     <th>Jumlah</th>
@@ -171,17 +173,19 @@ async function loadAllData() {
 // 2. Fungsi Render Tabel Pendapatan
 function renderPendapatan(data) {
     const tbody = document.getElementById('tabel-pendapatan');
-    tbody.innerHTML = data.length ? '' : '<tr><td colspan="5" class="text-center">Tidak ada data.</td></tr>';
+    tbody.innerHTML = data.length ? '' : '<tr><td colspan="6" class="text-center">Tidak ada data.</td></tr>';
     
     data.forEach(item => {
         tbody.innerHTML += `
             <tr>
                 <td>${item.tanggal}</td>
+                <td>${item.nama_aset}</td>
                 <td>${item.keterangan}</td>
                 <td>${item.nama_kategori}</td>
                 <td>Rp${parseInt(item.jumlah).toLocaleString('id-ID')}</td>
                 <td>
                     <button onclick="hapusData(${item.id_pendapatan}, 'hapus_pendapatan')" class="btn btn-sm btn-danger">Hapus</button>
+                    <a href="EditPendapatan.php?id=${item.id_pendapatan}" class="btn btn-sm btn-warning ms-1">Edit</a>
                 </td>
             </tr>`;
     });
@@ -190,17 +194,19 @@ function renderPendapatan(data) {
 // 3. Fungsi Render Tabel Pengeluaran
 function renderPengeluaran(data) {
     const tbody = document.getElementById('tabel-pengeluaran');
-    tbody.innerHTML = data.length ? '' : '<tr><td colspan="5" class="text-center">Tidak ada data.</td></tr>';
+    tbody.innerHTML = data.length ? '' : '<tr><td colspan="6" class="text-center">Tidak ada data.</td></tr>';
     
     data.forEach(item => {
         tbody.innerHTML += `
             <tr>
                 <td>${item.tanggal}</td>
+                <td>${item.nama_aset}</td>
                 <td>${item.keterangan}</td>
                 <td>${item.nama_kategori}</td>
                 <td>Rp${parseInt(item.jumlah).toLocaleString('id-ID')}</td>
                 <td>
                     <button onclick="hapusData(${item.id_pengeluaran}, 'hapus_pengeluaran')" class="btn btn-sm btn-danger">Hapus</button>
+                    <a href="EditPengeluaran.php?id=${item.id_pengeluaran}" class="btn btn-sm btn-warning ms-1">Edit</a>
                 </td>
             </tr>`;
     });
@@ -221,6 +227,7 @@ function renderTransfer(data) {
                 <td>${item.keterangan}</td>
                 <td>
                     <button onclick="hapusData(${item.id_transfer}, 'hapus_transfer')" class="btn btn-sm btn-danger">Hapus</button>
+                    <a href="EditTransfer.php?id=${item.id_transfer}" class="btn btn-sm btn-warning ms-1">Edit</a>
                 </td>
             </tr>`;
     });
