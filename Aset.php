@@ -1,3 +1,11 @@
+<?php
+session_start();
+// Jika belum login, tendang kembali ke halaman login
+if (!isset($_SESSION['id_pengguna'])) {
+    header("Location: login.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -9,19 +17,35 @@
         .nav-link.active { font-weight: bold; color: #0d6efd !important; }
         .aside-box { background-color: #eaf4ff; border-radius: 10px; padding: 20px; }
         footer { margin-top: 50px; }
+        footer { margin-top: 50px; text-align: center; color: #888; }
+        .table-responsive { min-height: 200px; }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container">
         <a class="navbar-brand fw-bold" href="#">Manajemen</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="Catatan.php">Catatan</a></li>
                 <li class="nav-item"><a class="nav-link" href="Tambah.php">Tambah</a></li>
                 <li class="nav-item"><a class="nav-link" href="Kategori.php">Kategori</a></li>
                 <li class="nav-item"><a class="nav-link active" href="Aset.php">Aset</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i> Halo, <?php echo htmlspecialchars($_SESSION['nama']); ?>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item text-danger" href="logout.php">Logout</a></li>
+                    </ul>
+                </li>
             </ul>
         </div>
     </div>
